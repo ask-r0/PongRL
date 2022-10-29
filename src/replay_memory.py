@@ -16,9 +16,9 @@ class ReplayMemory:
         """ Inits class with a capacity (max number of experiences to store at a given time) """
         self.memory = collections.deque([], maxlen=capacity)
 
-    def push(self, *args):
+    def push(self, experience):
         """Save an experience"""
-        self.memory.append(Experience(*args))
+        self.memory.append(experience)
 
     def get_sample(self, batch_size):
         """ Returns a random experience from the replay memory """
