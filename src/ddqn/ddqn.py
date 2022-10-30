@@ -3,32 +3,38 @@ import numpy as np
 from src.pong_env_manager import PongEnvManager
 from src.ddqn.network_2 import DQN
 from src.replay_memory import ReplayMemory, Experience
+from src.progress_plotter import plot_episode_vs_reward
 
 import random
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-
 # MODEL CONSTANTS
-GAMMA = 0.99  # The discount rate. Close to 1: future rewards matter more. Close to 0: immediate rewards matter more
-EPSILON_START = 0
-EPSILON_END = 0
-LEARNING_RATE = 0.1
+GAMMA = 0.97  # The discount rate. Close to 1: future rewards matter more. Close to 0: immediate rewards matter more
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY = 0.99
+LEARNING_RATE = 0.00025
 
-BATCH_SIZE = 50
-MEMORY_SIZE = 500
-NUM_EPISODES = 1000
-MAX_STEPS = 600
+BATCH_SIZE = 64
+MEMORY_SIZE = 1000
+NUM_EPISODES = 100
+MAX_STEPS = 1000
 
-TARGET_UPDATE = 10
+TARGET_UPDATE = 1
 
 FRAMES_PER_STATE = 4
 
-epsilon = EPSILON_START
+episode_list = []
+reward_list = []
 
 
-def select_action(env_manager, target_network):
+def get_new_epsilon(x):
+    return max(EPSILON_END, EPSILON_DECAY * x)
+
+
+def select_action(env_manager, target_network, epsilon):
     r = random.uniform(0, 1)
     if r < epsilon:  # Exploration
         return env_manager.get_random_action()
@@ -40,12 +46,11 @@ def select_action(env_manager, target_network):
             return target_network(tensor).argmax().item()
 
 
-def train():
+def train(epsilon=EPSILON_START):
     env_manager = PongEnvManager(FRAMES_PER_STATE, enable_render=False)
 
     processed_height = env_manager.img_processor.processed_height
     processed_width = env_manager.img_processor.processed_width
-    print(env_manager.get_processed_state().shape)
 
     replay_memory = ReplayMemory(MEMORY_SIZE)
     policy_net = DQN(processed_height, processed_width, 6)
@@ -56,18 +61,20 @@ def train():
     for episode in range(NUM_EPISODES):
         env_manager.reset()
         steps = 0
+        reward_sum = 0
 
         while (env_manager.is_done == False) and (steps <= MAX_STEPS):
             steps += 1
 
             #  Choosing action and performing it and saving experience to replay memory
             before_state = env_manager.get_processed_state()
-            action = select_action(env_manager, target_net)
+            action = select_action(env_manager, target_net, epsilon)
             reward = env_manager.step(action)
+            reward_sum += reward
             after_state = env_manager.get_processed_state()
             replay_memory.push(Experience(before_state, action, after_state, reward))
 
-            if replay_memory.is_sample_available(BATCH_SIZE):
+            if replay_memory.is_sample_available(BATCH_SIZE): #  Train NN
                 experiences = replay_memory.get_sample(BATCH_SIZE)
 
                 #  Handling the states, actions, next_states and rewards from batch...
@@ -85,8 +92,8 @@ def train():
                 rewards = torch.tensor(rewards, dtype=torch.float32)
 
                 #  get nn evaluation for current and next state
-                states_eval = policy_net(states)  # 256x6, tensor
-                next_states_eval = target_net(next_states)  # 256x6, tensor
+                states_eval = policy_net(states)  # output: 256x6, tensor
+                next_states_eval = target_net(next_states)  # output: 256x6, tensor
 
                 #  Calculating the values used to calculate loss.
                 #  target_q_values is the max q-value for next-state multiplied by gamma added to reward
@@ -101,9 +108,20 @@ def train():
                 optimizer.step()
                 optimizer.zero_grad()
                 print(episode)
+
         if episode % TARGET_UPDATE == 0:
             #  Update the target network to match the policy network
             target_net.load_state_dict(policy_net.state_dict())
+
+        #  Update epsilon
+        epsilon = get_new_epsilon(epsilon)
+
+        #  Update logging (used for plotting)
+        episode_list.append(episode)
+        reward_list.append(reward_sum)
+
+    # Plotting at end of training
+    plot_episode_vs_reward(episode_list, reward_list)
 
 
 train()
