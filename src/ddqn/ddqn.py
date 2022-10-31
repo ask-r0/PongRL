@@ -52,8 +52,8 @@ def select_action(env_manager, target_network, epsilon):
 def train(epsilon=EPSILON_START):
     env_manager = PongEnvManager(FRAMES_PER_STATE, enable_render=False)
 
-    processed_height = env_manager.img_processor.processed_height
-    processed_width = env_manager.img_processor.processed_width
+    processed_height = env_manager.img_processor.out_height_width
+    processed_width = env_manager.img_processor.out_height_width
 
     replay_memory = ReplayMemory(MEMORY_SIZE)
     policy_net = DQN(processed_height, processed_width, 6).to(DEVICE)
@@ -111,7 +111,7 @@ def train(epsilon=EPSILON_START):
                 optimizer.step()
                 optimizer.zero_grad()
 
-        print(f"Episode #{episode+1} done.")
+        print(f"Episode #{episode + 1} done.")
         if episode % TARGET_UPDATE == 0:
             #  Update the target network to match the policy network
             target_net.load_state_dict(policy_net.state_dict())

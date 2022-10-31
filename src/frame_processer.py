@@ -3,31 +3,27 @@ import numpy as np
 
 
 class ImagePreProcessor:
-    def __init__(self, initial_height, initial_width, crop_pixels_top, crop_pixels_bottom, do_gray, do_crop):
-        self.initial_height = initial_height
-        self.initial_width = initial_width
+    def __init__(self, out_height_width, crop_pixels_top, crop_pixels_bottom):
+        self.out_height_width = out_height_width
 
-        self.crop_pixels_top = crop_pixels_top
         self.crop_pixels_bottom = crop_pixels_bottom
-
-        self.processed_height = initial_height - crop_pixels_top - crop_pixels_bottom
-        self.processed_width = initial_width
-
-        self.do_gray = do_gray
-        self.do_crop = do_crop
+        self.crop_pixels_top = crop_pixels_top
 
     def get_processed_img(self, img):
-        if self.do_gray:
-            img = self.__img_to_gray(img)
-
+        img = self.__img_to_gray(img)
         img = self.__img_crop_height(img)
+        img = self.__img_resize(img)
         return img
 
     def get_black_image(self):
-        return np.zeros((self.processed_height, self.processed_width))
+        return np.zeros((self.out_height_width, self.out_height_width))
 
     def __img_crop_height(self, img):
         return img[self.crop_pixels_top:(img.shape[0] - self.crop_pixels_bottom), :]
+
+
+    def __img_resize(self, img):
+        return cv2.resize(img, (84, 84), interpolation=cv2.INTER_AREA)
 
     def __img_to_gray(self, img):
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

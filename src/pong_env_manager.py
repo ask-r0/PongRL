@@ -12,7 +12,7 @@ class PongEnvManager:
         else:
             self.env = gym.make("ALE/Pong-v5")
 
-        self.img_processor = ImagePreProcessor(210, 160, 25, 5, True, True)
+        self.img_processor = ImagePreProcessor(84, 25, 5)
 
         self.screen_buffer_size = screen_buffer_size
         self.screen_buffer = collections.deque(maxlen=screen_buffer_size)
