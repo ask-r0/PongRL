@@ -21,7 +21,8 @@ EPSILON_DECAY = 0.99
 LEARNING_RATE = 0.00025
 
 BATCH_SIZE = 64
-MEMORY_SIZE = 1000
+MEMORY_SIZE = 50000
+MIN_MEMORY_SIZE = 40000  # Training should not start before having MIN_MEMORY_SIZE
 NUM_EPISODES = 100
 MAX_STEPS = 1000
 
@@ -49,7 +50,7 @@ def select_action(env_manager, target_network, epsilon):
             return target_network(tensor).argmax().item()
 
 
-def train(epsilon=EPSILON_START):
+def train(epsilon=EPSILON_START, has_training_started=False):
     env_manager = PongEnvManager(FRAMES_PER_STATE, enable_render=False)
 
     processed_height = env_manager.img_processor.out_height_width
@@ -77,7 +78,9 @@ def train(epsilon=EPSILON_START):
             after_state = env_manager.get_processed_state()
             replay_memory.push(Experience(before_state, action, after_state, reward))
 
-            if replay_memory.is_sample_available(BATCH_SIZE):  # Train NN
+            if replay_memory.is_sample_available(BATCH_SIZE) and len(replay_memory) >= MIN_MEMORY_SIZE:  # Train NN
+                has_training_started = True
+
                 experiences = replay_memory.get_sample(BATCH_SIZE)
 
                 #  Handling the states, actions, next_states and rewards from batch...
@@ -111,13 +114,16 @@ def train(epsilon=EPSILON_START):
                 optimizer.step()
                 optimizer.zero_grad()
 
-        print(f"Episode #{episode + 1} done.")
-        if episode % TARGET_UPDATE == 0:
-            #  Update the target network to match the policy network
-            target_net.load_state_dict(policy_net.state_dict())
+        print(f"{episode + 1} ✅ ε={epsilon}")
 
-        #  Update epsilon
-        epsilon = get_new_epsilon(epsilon)
+        if has_training_started:
+            if episode % TARGET_UPDATE == 0:
+                #  Update the target network to match the policy network
+                print("‼️TARGET NET UPDATED‼️")
+                target_net.load_state_dict(policy_net.state_dict())
+
+            #  Update epsilon
+            epsilon = get_new_epsilon(epsilon)
 
         #  Update logging (used for plotting)
         episode_list.append(episode)
