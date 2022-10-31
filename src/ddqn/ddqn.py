@@ -11,6 +11,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 # MODEL CONSTANTS
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"DEVICE BEING USED: {DEVICE}")
+
 GAMMA = 0.97  # The discount rate. Close to 1: future rewards matter more. Close to 0: immediate rewards matter more
 EPSILON_START = 1.0
 EPSILON_END = 0.05
@@ -39,7 +42,7 @@ def select_action(env_manager, target_network, epsilon):
     if r < epsilon:  # Exploration
         return env_manager.get_random_action()
     else:  # Exploitation
-        tensor = torch.from_numpy(env_manager.get_processed_state())
+        tensor = torch.from_numpy(env_manager.get_processed_state()).to(DEVICE)
         tensor = tensor.to(torch.float32)
         tensor = tensor[None, :]
         with torch.no_grad():
@@ -53,8 +56,8 @@ def train(epsilon=EPSILON_START):
     processed_width = env_manager.img_processor.processed_width
 
     replay_memory = ReplayMemory(MEMORY_SIZE)
-    policy_net = DQN(processed_height, processed_width, 6)
-    target_net = DQN(processed_height, processed_width, 6)
+    policy_net = DQN(processed_height, processed_width, 6).to(DEVICE)
+    target_net = DQN(processed_height, processed_width, 6).to(DEVICE)
 
     optimizer = optim.Adam(params=policy_net.parameters(), lr=LEARNING_RATE)
 
@@ -74,7 +77,7 @@ def train(epsilon=EPSILON_START):
             after_state = env_manager.get_processed_state()
             replay_memory.push(Experience(before_state, action, after_state, reward))
 
-            if replay_memory.is_sample_available(BATCH_SIZE): #  Train NN
+            if replay_memory.is_sample_available(BATCH_SIZE):  # Train NN
                 experiences = replay_memory.get_sample(BATCH_SIZE)
 
                 #  Handling the states, actions, next_states and rewards from batch...
@@ -86,10 +89,10 @@ def train(epsilon=EPSILON_START):
                 next_states = np.stack(next_states)
 
                 #  Converting them to tensors
-                states = torch.tensor(states, dtype=torch.float32)
-                actions = torch.tensor(actions, dtype=torch.int64)
-                next_states = torch.tensor(next_states, dtype=torch.float32)
-                rewards = torch.tensor(rewards, dtype=torch.float32)
+                states = torch.tensor(states, dtype=torch.float32, device=DEVICE)
+                actions = torch.tensor(actions, dtype=torch.int64, device=DEVICE)
+                next_states = torch.tensor(next_states, dtype=torch.float32, device=DEVICE)
+                rewards = torch.tensor(rewards, dtype=torch.float32, device=DEVICE)
 
                 #  get nn evaluation for current and next state
                 states_eval = policy_net(states)  # output: 256x6, tensor
@@ -107,8 +110,8 @@ def train(epsilon=EPSILON_START):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                print(episode)
 
+        print(f"Episode #{episode+1} done.")
         if episode % TARGET_UPDATE == 0:
             #  Update the target network to match the policy network
             target_net.load_state_dict(policy_net.state_dict())
