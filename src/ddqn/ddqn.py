@@ -5,13 +5,16 @@ from src.ddqn.network import DQN
 from src.replay_memory import ReplayMemory, Experience
 from src.progress_plotter import plot_episode_vs_reward
 
+import json
 import random
+
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
 # STORAGE CONSTANTS
 MODEL_FILE_PATH = "storage/nn.pth"
+PARAM_FILE_PATH = "storage/params.json"
 LOAD_FROM_FILE = True
 SAVE_TO_FILE = True
 
@@ -29,17 +32,13 @@ LEARNING_RATE = 0.00025
 BATCH_SIZE = 64  # Number of experiences as input to nn for each optimization
 MEMORY_SIZE = 50000  # Maximum amount of experiences to hold
 MIN_MEMORY_SIZE = 40000  # Training should not start before having MIN_MEMORY_SIZE experiences
+
 NUM_EPISODES = 100  # Number of episodes for the training loop
 MAX_STEPS = 1000  # Maximum steps for each episode
 
 TARGET_UPDATE_INTERVAL = 1  # How often target net is updated to equal the policy net. 1: each episode, 2 every other,..
 
 FRAMES_PER_STATE = 4  # How many consecutive frames does one state consist of >= 1 to catch movement
-
-
-#  Plotting
-episode_list = []
-reward_list = []
 
 
 def get_new_epsilon(cur_epsilon):
@@ -65,19 +64,45 @@ def select_action(env_manager, target_network, epsilon):
             return target_network(tensor).argmax().item()
 
 
-def train(epsilon=EPSILON_START, has_training_started=False):
+def train(epsilon=EPSILON_START, has_training_started=False, start_episode=0):
+    #  Plotting
+    episode_list = []
+    reward_list = []
+
+    #  Initializing environment
     env_manager = PongEnvManager(FRAMES_PER_STATE, enable_render=False)
-
-    processed_height = env_manager.img_processor.out_height_width
-    processed_width = env_manager.img_processor.out_height_width
-
     replay_memory = ReplayMemory(MEMORY_SIZE)
-    policy_net = DQN(processed_height, processed_width, 6).to(DEVICE)
-    target_net = DQN(processed_height, processed_width, 6).to(DEVICE)
 
+    #  Load/Initialize models & params
+    processed_height_width = env_manager.img_processor.out_height_width
+    if LOAD_FROM_FILE:
+        #  Load models
+        policy_net = DQN(processed_height_width, processed_height_width, 6)
+        policy_net.load_state_dict(torch.load(MODEL_FILE_PATH))
+        policy_net.to(DEVICE)
+        policy_net.eval()
+
+        target_net = DQN(processed_height_width, processed_height_width, 6)
+        target_net.load_state_dict(torch.load(MODEL_FILE_PATH))
+        target_net.to(DEVICE)
+        target_net.eval()
+
+        # Load params
+        with open(PARAM_FILE_PATH, "r") as f:
+            file_content = json.load(f)
+            start_episode = file_content["start_episode"]
+            epsilon = file_content["epsilon"]
+            episode_list = file_content["episode_list"]
+            reward_list = file_content["reward_list"]
+
+    else:
+        policy_net = DQN(processed_height_width, processed_height_width, 6).to(DEVICE)
+        target_net = DQN(processed_height_width, processed_height_width, 6).to(DEVICE)
+
+    #  Optimizer
     optimizer = optim.Adam(params=policy_net.parameters(), lr=LEARNING_RATE)
 
-    for episode in range(NUM_EPISODES):
+    for episode in range(start_episode, NUM_EPISODES):
         env_manager.reset()
         steps = 0
         reward_sum = 0
@@ -93,9 +118,11 @@ def train(epsilon=EPSILON_START, has_training_started=False):
             after_state = env_manager.get_processed_state()
             replay_memory.push(Experience(before_state, action, after_state, reward))
 
-            if replay_memory.is_sample_available(BATCH_SIZE) and len(replay_memory) >= MIN_MEMORY_SIZE:  # Train NN
+            #  Training NN from experiences, if there is enough experiences
+            if replay_memory.is_sample_available(BATCH_SIZE) and len(replay_memory) >= MIN_MEMORY_SIZE:
                 has_training_started = True
 
+                #  Getting a random batch of experiences from replay memory
                 experiences = replay_memory.get_sample(BATCH_SIZE)
 
                 #  Handling the states, actions, next_states and rewards from batch...
@@ -106,7 +133,7 @@ def train(epsilon=EPSILON_START, has_training_started=False):
                 states = np.stack(states)
                 next_states = np.stack(next_states)
 
-                #  Converting them to tensors
+                #  Converting to tensors
                 states = torch.tensor(states, dtype=torch.float32, device=DEVICE)
                 actions = torch.tensor(actions, dtype=torch.int64, device=DEVICE)
                 next_states = torch.tensor(next_states, dtype=torch.float32, device=DEVICE)
@@ -116,7 +143,7 @@ def train(epsilon=EPSILON_START, has_training_started=False):
                 states_eval = policy_net(states)  # output: 256x6, tensor
                 next_states_eval = target_net(next_states)  # output: 256x6, tensor
 
-                #  Calculating the values used to calculate loss.
+                #  Calculating the values needed for calculating loss...
                 #  target_q_values is the max q-value for next-state multiplied by gamma added to reward
                 #  current_q_values is the q-value for the action taken it the state
                 target_q_values, _ = torch.max(next_states_eval, dim=1)
@@ -129,16 +156,31 @@ def train(epsilon=EPSILON_START, has_training_started=False):
                 optimizer.step()
                 optimizer.zero_grad()
 
-        print(f"{episode + 1} ✅ ε={epsilon}")
+        print(f"{episode + 1} - ✅ ε={epsilon}")
 
         if has_training_started:
+            #  Update the target network to match the policy network
             if episode % TARGET_UPDATE_INTERVAL == 0:
-                #  Update the target network to match the policy network
-                print("‼️TARGET NET UPDATED‼️")
                 target_net.load_state_dict(policy_net.state_dict())
+                print("‼️TARGET NET UPDATED‼️")
 
             #  Update epsilon
             epsilon = get_new_epsilon(epsilon)
+
+            #  Save model state
+            if SAVE_TO_FILE:
+                #  save nn
+                torch.save(policy_net.state_dict(), MODEL_FILE_PATH)
+
+                #  save model params
+                params = {
+                    "start_episode": episode,
+                    "epsilon": epsilon,
+                    "episode_list": episode_list,
+                    "reward_list": reward_list
+                }
+                with open(PARAM_FILE_PATH, "w") as f:
+                    json.dump(params, f)
 
         #  Update logging (used for plotting)
         episode_list.append(episode)
