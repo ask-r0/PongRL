@@ -1,7 +1,7 @@
 import numpy as np
 
 from src.pong_env_manager import PongEnvManager
-from src.ddqn.network_2 import DQN
+from src.ddqn.network import DQN
 from src.replay_memory import ReplayMemory, Experience
 from src.progress_plotter import plot_episode_vs_reward
 
@@ -10,35 +10,50 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
+# STORAGE CONSTANTS
+MODEL_FILE_PATH = "storage/nn.pth"
+LOAD_FROM_FILE = True
+SAVE_TO_FILE = True
+
+
 # MODEL CONSTANTS
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"DEVICE BEING USED: {DEVICE}")
 
 GAMMA = 0.97  # The discount rate. Close to 1: future rewards matter more. Close to 0: immediate rewards matter more
-EPSILON_START = 1.0
-EPSILON_END = 0.05
-EPSILON_DECAY = 0.99
+EPSILON_START = 1.0  # Initial epsilon
+EPSILON_END = 0.05  # Epsilon is always greater or equal to this value
+EPSILON_DECAY = 0.99  # new_epsilon = old_epsilon * EPSILON_DECAY
 LEARNING_RATE = 0.00025
 
-BATCH_SIZE = 64
-MEMORY_SIZE = 50000
-MIN_MEMORY_SIZE = 40000  # Training should not start before having MIN_MEMORY_SIZE
-NUM_EPISODES = 100
-MAX_STEPS = 1000
+BATCH_SIZE = 64  # Number of experiences as input to nn for each optimization
+MEMORY_SIZE = 50000  # Maximum amount of experiences to hold
+MIN_MEMORY_SIZE = 40000  # Training should not start before having MIN_MEMORY_SIZE experiences
+NUM_EPISODES = 100  # Number of episodes for the training loop
+MAX_STEPS = 1000  # Maximum steps for each episode
 
-TARGET_UPDATE = 1
+TARGET_UPDATE_INTERVAL = 1  # How often target net is updated to equal the policy net. 1: each episode, 2 every other,..
 
-FRAMES_PER_STATE = 4
+FRAMES_PER_STATE = 4  # How many consecutive frames does one state consist of >= 1 to catch movement
 
+
+#  Plotting
 episode_list = []
 reward_list = []
 
 
-def get_new_epsilon(x):
-    return max(EPSILON_END, EPSILON_DECAY * x)
+def get_new_epsilon(cur_epsilon):
+    """Returns new epsilon based on current epsilon"""
+    return max(EPSILON_END, EPSILON_DECAY * cur_epsilon)
 
 
 def select_action(env_manager, target_network, epsilon):
+    """Selects an action based on epsilon-value
+    Arguments:
+        env_manager: Environment to perform action
+        target_network: The target network. Used to get best action in current state
+        epsilon: Epsilon value
+    """
     r = random.uniform(0, 1)
     if r < epsilon:  # Exploration
         return env_manager.get_random_action()
@@ -117,7 +132,7 @@ def train(epsilon=EPSILON_START, has_training_started=False):
         print(f"{episode + 1} ✅ ε={epsilon}")
 
         if has_training_started:
-            if episode % TARGET_UPDATE == 0:
+            if episode % TARGET_UPDATE_INTERVAL == 0:
                 #  Update the target network to match the policy network
                 print("‼️TARGET NET UPDATED‼️")
                 target_net.load_state_dict(policy_net.state_dict())
