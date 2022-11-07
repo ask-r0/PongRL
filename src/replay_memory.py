@@ -1,13 +1,13 @@
 import collections
 import random
+import numpy as np
 
 # An experience of an agent. This includes a state, action taken in state, the next state and a received reward
-Experience = collections.namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
+Experience = collections.namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'done'))
 
 
 class ReplayMemory:
     """ Class for ReplayMemory: a collection of experiences to be used for training the agent.
-
     Attributes:
         memory: A queue used to store experiences
     """
@@ -23,6 +23,11 @@ class ReplayMemory:
     def get_sample(self, batch_size):
         """ Returns a random experience from the replay memory """
         return random.sample(self.memory, batch_size)
+
+    def get_sample_v2(self, batch_size):
+        indices = np.random.choice(len(self.memory), batch_size, replace=False)
+        states, actions, next_states, rewards, dones = zip(*[self.memory[idx] for idx in indices])
+        return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states)
 
     def is_sample_available(self, batch_size):
         """ A sample is only available for a given batch_size if ReplayMemory has enough experiences"""

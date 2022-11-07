@@ -1,62 +1,56 @@
-import collections
 import gym
+import collections
 import numpy as np
-
-from src.frame_processer import ImagePreProcessor
+import cv2
 
 
 class PongEnvManager:
-    def __init__(self, screen_buffer_size, enable_render):
+    def __init__(self, skip_frames, enable_render):
         if enable_render:
-            self.env = gym.make("ALE/Pong-v5", render_mode="human")
+            self.env = gym.make("PongNoFrameskip-v4", render_mode="human")
         else:
-            self.env = gym.make("ALE/Pong-v5")
+            self.env = gym.make("PongNoFrameskip-v4")
 
-        self.img_processor = ImagePreProcessor(84, 25, 5, perform_normalization=True)
+        self.obs_buffer = collections.deque(maxlen=2)
+        self.skip_frames = skip_frames
 
-        self.screen_buffer_size = screen_buffer_size
-        self.screen_buffer = collections.deque(maxlen=screen_buffer_size)
-        self.__reset_screen_buffer()
-
-        self.is_done = False
-        self.time = 0
+        self.do_normalize = True
 
     def reset(self):
-        self.env.reset()
-        #  self.__reset_screen_buffer()
-        self.time = 0
-        self.is_done = False
+        self.obs_buffer.clear()
+        obs1 = self.env.reset()
+        obs2, _, _, _ = self.env.step(1)  # Performs fire needed to start game
+
+        processed_obs1 = self.process_observation(obs1, self.do_normalize)
+        processed_obs2 = self.process_observation(obs2, self.do_normalize)
+        self.obs_buffer.append(processed_obs1)
+        self.obs_buffer.append(processed_obs2)
+
+        max_frames = np.max(np.stack(self.obs_buffer), axis=0)
+        return max_frames
 
     def step(self, action):
-        observation, reward, done, info = self.env.step(action)  # TODO: verify the return types and meanings
-        self.__update_buffer(observation)
-        self.is_done = done
-        self.time += 1
-
-        return reward
-
-    def get_processed_state(self):
-        """ Returns a processed state of the environment.
-        An environment state is represented by 4 consecutive frames.
-        4 consecutive frames is necessary to capture direction of motion, speed, etc.
-
-        Each frame is processed by (1) grayscale frame (2) crop frame.
-        NB! preprocessing not done in this method, but rather when added to screen_buffer
-        """
-        frames = []
-        for i in range(self.screen_buffer_size):
-            frames.append(self.screen_buffer[i])
-        return np.stack(frames)
+        reward_sum = 0
+        done = None
+        for i in range(self.skip_frames):
+            obs, reward, done, info = self.env.step(action)
+            processed_obs = self.process_observation(obs, self.do_normalize)
+            self.obs_buffer.append(processed_obs)
+            reward_sum += reward
+            if done:
+                break
+        max_frames = np.max(np.stack(self.obs_buffer), axis=0)  # Max of last two frames
+        return max_frames, reward_sum, done, info
 
     def get_random_action(self):
         return self.env.action_space.sample()
 
-    def __reset_screen_buffer(self):
-        self.screen_buffer.clear()
-
-        for i in range(self.screen_buffer_size):
-            self.screen_buffer.append(self.img_processor.get_black_image())
-
-    def __update_buffer(self, screen):
-        screen = self.img_processor.get_processed_img(screen)
-        self.screen_buffer.append(screen)
+    @staticmethod
+    def process_observation(frame, do_normalize):
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # grayscale
+        frame = frame[:, :, 0] * 0.299 + frame[:, :, 1] * 0.587 + frame[:, :, 2] * 0.114
+        frame = frame[33:(frame.shape[0] - 15), :]  # crop
+        frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)  # resize to 84x84
+        if do_normalize:
+            frame = np.array(frame).astype(np.float32) / 255.0
+        return frame

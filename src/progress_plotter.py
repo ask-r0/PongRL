@@ -2,28 +2,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_episode_vs_reward(episodes, rewards, avg_window=40):
+def plot_frame_vs_reward(frames, rewards, plot_raw, plot_avg, avg_window=40):
     """ Plots episode (x-axis) v reward (y-axis)
     Attributes:
-        episodes: list of episode numbers. episodes[i] corresponds to rewards from rewards[i]
+        frames: list of frame numbers. episodes[i] corresponds to rewards from rewards[i]
         rewards: list of rewards.
         avg_window: Window for plotting running average
     """
     # Plot data
-    plt.plot(episodes, rewards)
+    if plot_raw:
+        plt.plot(frames, rewards)
 
     # Plot running average
-    avg_data = []
-    for i in range(avg_window-1):
-        avg_data.append(np.nan)
+    if plot_avg:
+        avg_data = []
+        for i in range(avg_window-1):
+            avg_data.append(np.nan)
 
-    for i in range(len(rewards) - avg_window + 1):
-        avg_data.append(np.mean(rewards[i:i+avg_window]))
+        for i in range(len(rewards) - avg_window + 1):
+            avg_data.append(np.mean(rewards[i:i+avg_window]))
 
-    plt.plot(episodes, avg_data)
+        plt.plot(frames, avg_data)
 
     # Final styling
-    plt.title("Reward vs Episode")
-    plt.xlabel("Episode number")
-    plt.ylabel("Reward of episode")
+    plt.title("Reward vs Frame")
+    plt.xlabel("Frame")
+    plt.ylabel("Reward")
     plt.show()
