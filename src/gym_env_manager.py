@@ -4,12 +4,12 @@ import numpy as np
 import cv2
 
 
-class PongEnvManager:
-    def __init__(self, skip_frames, enable_render):
-        if enable_render:
-            self.env = gym.make("PongNoFrameskip-v4", render_mode="human")
+class GymEnvManager:
+    def __init__(self, skip_frames, gym_environment_name, render):
+        if render:
+            self.env = gym.make(gym_environment_name, render_mode="human")
         else:
-            self.env = gym.make("PongNoFrameskip-v4")
+            self.env = gym.make(gym_environment_name)
 
         self.obs_buffer = collections.deque(maxlen=2)
         self.skip_frames = skip_frames

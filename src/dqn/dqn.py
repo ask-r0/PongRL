@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from src.pong_env_manager import PongEnvManager
+from src.gym_env_manager import GymEnvManager
 from src.dqn.net import DQN
 from src.replay_memory import ReplayMemory
 from src.agent import Agent
@@ -60,7 +60,7 @@ def training_loop(device):
     episodes = []
 
     #  Env setup
-    env_manager = PongEnvManager(4, False)
+    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", False)
     policy_net = DQN((4, 84, 84), 6).to(device)
     target_net = DQN((4, 84, 84), 6).to(device)
 
