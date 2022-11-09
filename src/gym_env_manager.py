@@ -33,14 +33,14 @@ class GymEnvManager:
         the action fire is taken (needed to start some gym environments).
 
         Returns:
-            Initial state. See the documentation for the step method for full explanation of the max_frames line.
+            Initial observation. See the documentation for the step method for full explanation of the max_frames line.
         """
 
         self.obs_buffer.clear()
         obs1 = self.env.reset()
         obs2, _, _, _ = self.env.step(1)  # Performs fire needed to start game
 
-        # Process & store initial state in observation buffer
+        # Process & store initial observation in observation buffer
         processed_obs1 = self.process_observation(obs1)
         processed_obs2 = self.process_observation(obs2)
         self.obs_buffer.append(processed_obs1)
@@ -62,10 +62,10 @@ class GymEnvManager:
 
          Returns:
              max_frames: Maximum value for each pixel colour value over the two previous processed frames.
-               This represents the resulting state of the environment after performing specified action.
+               This represents the observation of the environment after performing specified action.
              reward_sum: Sum of rewards from the steps taken.
              done: Boolean indicating if the environment is done (e.g. the game is won/lost).
-             info: Info about state.
+             info: Info about environment.
 
 
         """
