@@ -16,7 +16,7 @@ def load_nn_and_play(nn_path, device):
         nn.load_state_dict(torch.load(nn_path, map_location=torch.device("cpu")))
         nn.eval()
 
-    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", True)
+    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", True, True, 33, 15)
     replay_memory = ReplayMemory(1)  # Size=1 because it is not really needed...
     agent = Agent(env_manager, replay_memory, device)
 

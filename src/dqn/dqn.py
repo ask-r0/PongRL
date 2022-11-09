@@ -60,7 +60,7 @@ def training_loop(device):
     episodes = []
 
     #  Env setup
-    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", False)
+    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", False, True, 33, 15)
     policy_net = DQN((4, 84, 84), 6).to(device)
     target_net = DQN((4, 84, 84), 6).to(device)
 
@@ -79,7 +79,7 @@ def training_loop(device):
             episodes.append(i)
 
         if len(replay_memory) >= MIN_MEMORY_SIZE:  # Perform training
-            batch = replay_memory.get_sample_v2(BATCH_SIZE)
+            batch = replay_memory.get_sample(BATCH_SIZE)
             loss = get_loss(batch, policy_net, target_net, device)
             loss.backward()
             optimizer.step()

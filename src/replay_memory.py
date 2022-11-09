@@ -1,8 +1,7 @@
 import collections
-import random
 import numpy as np
 
-# An experience of an agent. This includes a state, action taken in state, the next state and a received reward
+# An experience of an agent. Includes: a state, action taken in state, resulting state, received reward, done status
 Experience = collections.namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'done'))
 
 
@@ -17,15 +16,16 @@ class ReplayMemory:
         self.memory = collections.deque([], maxlen=capacity)
 
     def push(self, experience):
-        """Save an experience"""
+        """Save an experience to memory """
         self.memory.append(experience)
 
     def get_sample(self, batch_size):
-        """ Returns a random experience from the replay memory """
-        return random.sample(self.memory, batch_size)
+        """ Returns a random batch of experiences from the replay memory.
+        One batch is returned as 5 arrays. One array for each experience parameter (states, actions, next_states,
+        rewards and dones). Experience number x from batch corresponds to index x in the different arrays.
 
-    def get_sample_v2(self, batch_size):
-        indices = np.random.choice(len(self.memory), batch_size, replace=False)
+        """
+        indices = np.random.choice(np.arange(len(self.memory)), batch_size, replace=False)
         states, actions, next_states, rewards, dones = zip(*[self.memory[idx] for idx in indices])
         return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states)
 
