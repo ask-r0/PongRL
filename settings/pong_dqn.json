@@ -1,0 +1,19 @@
+{
+  "env_name": "PongNoFrameskip-v4",
+  "save_to_file": true,
+  "model_path": "nn.pth",
+  "params_path": "params.json",
+  "gamma": 0.99,
+  "learning_rate": 0.0001,
+  "epsilon_initial": 1.0,
+  "epsilon_min": 0.02,
+  "epsilon_decay": 140000,
+  "batch_size": 32,
+  "memory_size": 10000,
+  "memory_size_min": 10000,
+  "max_frames": 1000000,
+  "logging_rate": 1000,
+  "target_net_update": 1000,
+  "optimizer": "adam",
+  "loss_function": "mse"
+}
