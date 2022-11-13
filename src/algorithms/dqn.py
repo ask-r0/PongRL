@@ -39,8 +39,9 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
                   gamma, target_net_update, epsilon_min, epsilon_decay, logging_rate, save_to_file, model_path,
                   params_path, optimizer, loss_function, network):
     # Logging
-    rewards = []
-    frames = []
+    frames = []  # Frames where episodes ended
+    rewards = []  # Corresponding rewards for the episode
+    speeds = []  # Corresponding speed for the episode
 
     #  Env setup
     env_manager = GymEnvManager(4, env_name, False, True, 33, 15)
@@ -68,8 +69,11 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
     for i in range(max_frames):
         reward = agent.perform_action(epsilon, target_net)
         if reward is not None:  # Episode is done, and reward_sum for episode is returned
-            rewards.append(reward)
+            #  Logging
             frames.append(i)
+            rewards.append(reward)
+            speeds.append((frames[len(frames)-1] - frames[len(frames)-2]) / (time.time() - time_start))
+            time_start = time.time()
 
         if len(replay_memory) >= memory_size_min:  # Perform training
             batch = replay_memory.get_sample(batch_size)
@@ -93,14 +97,16 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
                     "total_frames": i,
                     "epsilon": epsilon,
                     "frames": frames,
-                    "rewards": rewards
+                    "rewards": rewards,
+                    "speeds": speeds
                 }
                 with open(params_path, "w") as f:
                     json.dump(params, f)
 
-            fps = logging_rate / (time.time() - time_start)
-            time_start = time.time()
-            print(f"{i} ✅ ε={epsilon}, {fps:.2f} fps")
+            frames_idx = len(frames) - 1
+            if frames_idx >= 0:
+                print(f"{i} ✅ ε={epsilon}, last episode ended @ frame={frames[frames_idx]}:"
+                      f" fps={speeds[frames_idx]:.2f}, reward={rewards[frames_idx]}")
 
 
 def train_from_settings(settings_path):
