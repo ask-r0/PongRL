@@ -1,13 +1,18 @@
-from src.networks.net import DQN
 from src.utils.gym_env_manager import GymEnvManager
 from src.utils.replay_memory import ReplayMemory
 from src.utils.agent import Agent
+import src.networks.ann as ann
+import src.networks.nature_cnn as nature_cnn
 import torch
 
 
-def load_nn_and_play(nn_path, device):
+def load_nn_and_play_pong(nn_path, nn_type, device):
     #  Loading nn
-    nn = DQN((4, 84, 84), 6)
+    if nn_type == "ann":
+        nn = ann.DQN(6).to(device)
+    else:
+        nn = nature_cnn.DQN(6).to(device)
+
     if device == "cuda":
         nn.load_state_dict(torch.load(nn_path))
         nn.to(torch.device("cuda"))

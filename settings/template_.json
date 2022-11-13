@@ -15,5 +15,6 @@
   "logging_rate": 0,
   "target_net_update": 0,
   "optimizer": "",
-  "loss_function": ""
+  "loss_function": "",
+  "network": "ann"
 }

@@ -24,5 +24,6 @@ One setting-profile is stored as a json file, with the following parameters (see
 | target_net_update | Number of frames between each update of the target network                     |                      |
 | optimizer         | Optimizer to be used. Available choices: `adam`, `rmsprop`.                    | "adam"               |
 | loss_function     | Loss function to be used. Available choices: `mse`, `huber`.                   | "mse"                |
+| network           | Neural network to be used in training. Available choices: `cnn`, `ann`.        | "cnn"                |
 
  
