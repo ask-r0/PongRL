@@ -7,9 +7,7 @@ class DQN(nn.Module):
         self.n_actions = n_actions
 
         self.net = nn.Sequential(
-            nn.Linear(28224, 2048),
-            nn.ReLU(),
-            nn.Linear(2048, 1024),
+            nn.Linear(28224, 1024),
             nn.ReLU(),
             nn.Linear(1024, 256),
             nn.ReLU(),
