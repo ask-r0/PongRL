@@ -1,12 +1,12 @@
 import torch.nn as nn
 
 
-class DQN(nn.Module):
+class NatureCNN(nn.Module):
     """
     Only for input: 4x84x84, which is typical for atari games
     """
     def __init__(self, n_actions):
-        super(DQN, self).__init__()
+        super(NatureCNN, self).__init__()
 
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=4, out_channels=32, kernel_size=8, stride=4),  # in: 4x84x84, out: 32x20x20

@@ -4,8 +4,8 @@ import torch.optim as optim
 from src.utils.gym_env_manager import GymEnvManager
 from src.utils.replay_memory import ReplayMemory
 from src.utils.agent import Agent
-import src.networks.nature_cnn as nature_cnn
-import src.networks.ann as ann
+from src.networks.nature_cnn import NatureCNN
+from src.networks.ann import ANN
 import json
 import time
 
@@ -48,11 +48,11 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
     num_actions = env_manager.get_num_actions()
 
     if network == "ann":
-        policy_net = ann.DQN(num_actions).to(device)
-        target_net = ann.DQN(num_actions).to(device)
+        policy_net = ANN(num_actions).to(device)
+        target_net = ANN(num_actions).to(device)
     else:
-        policy_net = nature_cnn.DQN(num_actions).to(device)
-        target_net = nature_cnn.DQN(num_actions).to(device)
+        policy_net = NatureCNN(num_actions).to(device)
+        target_net = NatureCNN(num_actions).to(device)
 
     replay_memory = ReplayMemory(memory_size)
     agent = Agent(env_manager, replay_memory, device)

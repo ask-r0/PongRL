@@ -4,7 +4,7 @@ from src.utils.play import load_nn_and_play_pong
 
 def main():
     # load_nn_and_play_pong("../trained_networks/pong_dqn_cnn/nn.pth", "cnn", "cpu")
-    train_from_settings("../settings/pong_dqn_v1.json")
+    train_from_settings("../settings/pong_v3.json")
     pass
 
 

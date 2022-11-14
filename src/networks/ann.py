@@ -1,9 +1,9 @@
 import torch.nn as nn
 
 
-class DQN(nn.Module):
+class ANN(nn.Module):
     def __init__(self, n_actions):
-        super(DQN, self).__init__()
+        super(ANN, self).__init__()
         self.n_actions = n_actions
 
         self.net = nn.Sequential(
@@ -15,4 +15,5 @@ class DQN(nn.Module):
         )
 
     def forward(self, x):
+        x = x.view(x.size()[0], -1)
         return self.net(x)

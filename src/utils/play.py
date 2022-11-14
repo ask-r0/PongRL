@@ -9,9 +9,9 @@ import torch
 def load_nn_and_play_pong(nn_path, nn_type, device):
     #  Loading nn
     if nn_type == "ann":
-        nn = ann.DQN(6).to(device)
+        nn = ann.ANN(6).to(device)
     else:
-        nn = nature_cnn.DQN(6).to(device)
+        nn = nature_cnn.NatureCNN(6).to(device)
 
     if device == "cuda":
         nn.load_state_dict(torch.load(nn_path))
