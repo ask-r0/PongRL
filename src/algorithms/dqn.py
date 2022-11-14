@@ -15,7 +15,31 @@ def get_new_epsilon(epsilon, epsilon_min, epsilon_decay):
     return max(epsilon_min, epsilon - 1.0 / epsilon_decay)
 
 
-def get_loss(batch, policy_net, target_net, gamma, device, loss_function):
+def get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function):
+    states, actions, rewards, dones, next_states = batch  # Gets attributes from batch
+    states_t = torch.tensor(states).to(device)
+    next_states_t = torch.tensor(next_states).to(device)
+    actions_t = torch.tensor(actions).to(device)
+    rewards_t = torch.tensor(rewards).to(device)
+    done_t = torch.ByteTensor(dones).to(device)
+
+    state_action_values = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
+    next_state_actions = policy_net(next_states_t).max(1)[1]  # The action to be taken from next state
+
+    #  Q(next_state, best action from next state according to policy net)
+    next_state_values = target_net(next_states_t).gather(1, next_state_actions.unsqueeze(-1)).squeeze(-1)
+
+    next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the las
+    next_state_values = next_state_values.detach()
+    expected_state_action_values = next_state_values * gamma + rewards_t
+
+    if loss_function == "huber":
+        return nn.SmoothL1Loss()(state_action_values, expected_state_action_values)
+    else:
+        return nn.MSELoss()(state_action_values, expected_state_action_values)
+
+
+def get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function):
     states, actions, rewards, dones, next_states = batch
     states_t = torch.tensor(states).to(device)
     next_states_t = torch.tensor(next_states).to(device)
@@ -23,9 +47,9 @@ def get_loss(batch, policy_net, target_net, gamma, device, loss_function):
     rewards_t = torch.tensor(rewards).to(device)
     done_t = torch.ByteTensor(dones).to(device)
 
-    state_action_values = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)
-    next_state_values = target_net(next_states_t).max(1)[0]
-    next_state_values[done_t] = 0.0
+    state_action_values = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
+    next_state_values = target_net(next_states_t).max(1)[0]  # max Q-value for next state
+    next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last
     next_state_values = next_state_values.detach()
     expected_state_action_values = next_state_values * gamma + rewards_t
 
@@ -72,12 +96,12 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
             #  Logging
             frames.append(i)
             rewards.append(reward)
-            speeds.append((frames[len(frames)-1] - frames[len(frames)-2]) / (time.time() - time_start))
+            speeds.append((frames[len(frames) - 1] - frames[len(frames) - 2]) / (time.time() - time_start))
             time_start = time.time()
 
         if len(replay_memory) >= memory_size_min:  # Perform training
             batch = replay_memory.get_sample(batch_size)
-            loss = get_loss(batch, policy_net, target_net, gamma, device, loss_function)
+            loss = get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function)
             loss.backward()
             opt.step()
             opt.zero_grad()
@@ -118,5 +142,3 @@ def train_from_settings(settings_path):
                   s["memory_size_min"], s["batch_size"], s["gamma"], s["target_net_update"], s["epsilon_min"],
                   s["epsilon_decay"], s["logging_rate"], s["save_to_file"], s["model_path"], s["params_path"],
                   s["optimizer"], s["loss_function"], s["network"])
-
-
