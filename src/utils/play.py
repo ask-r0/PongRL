@@ -3,6 +3,7 @@ from src.utils.replay_memory import ReplayMemory
 from src.utils.agent import Agent
 import src.networks.ann as ann
 import src.networks.nature_cnn as nature_cnn
+import src.networks.dueling_cnn as dueling_cnn
 import torch
 
 
@@ -10,6 +11,8 @@ def load_nn_and_play_pong(nn_path, nn_type, device):
     #  Loading nn
     if nn_type == "ann":
         nn = ann.ANN(6).to(device)
+    elif nn_type == "dueling":
+        nn = dueling_cnn.DuelingCNN(6).to(device)
     else:
         nn = nature_cnn.NatureCNN(6).to(device)
 
