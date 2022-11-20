@@ -1,20 +1,17 @@
 from src.utils.gym_env_manager import GymEnvManager
 from src.utils.replay_memory import ReplayMemory
 from src.utils.agent import Agent
-import src.networks.ann as ann
 import src.networks.nature_cnn as nature_cnn
 import src.networks.dueling_cnn as dueling_cnn
 import torch
 
 
-def load_nn_and_play_pong(nn_path, nn_type, device):
+def load_nn_and_play_pong(nn_path, nn_type, num_frames, device):
     #  Loading nn
-    if nn_type == "ann":
-        nn = ann.ANN(6).to(device)
-    elif nn_type == "dueling":
-        nn = dueling_cnn.DuelingCNN(6).to(device)
+    if nn_type == "dueling":
+        nn = dueling_cnn.DuelingCNN(84, 6).to(device)
     else:
-        nn = nature_cnn.NatureCNN(6).to(device)
+        nn = nature_cnn.NatureCNN(84, 6).to(device)
 
     if device == "cuda":
         nn.load_state_dict(torch.load(nn_path))
@@ -24,10 +21,9 @@ def load_nn_and_play_pong(nn_path, nn_type, device):
         nn.load_state_dict(torch.load(nn_path, map_location=torch.device("cpu")))
         nn.eval()
 
-    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", True, True, 33, 15)
+    env_manager = GymEnvManager(4, "PongNoFrameskip-v4", True, True, 33, 15, 84)
     replay_memory = ReplayMemory(1)  # Size=1 because it is not really needed...
     agent = Agent(env_manager, replay_memory, device)
 
-    max_frames = 10000
-    for i in range(max_frames):
+    for i in range(num_frames):
         agent.perform_action(0, nn)

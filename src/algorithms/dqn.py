@@ -5,7 +5,6 @@ from src.utils.gym_env_manager import GymEnvManager
 from src.utils.replay_memory import ReplayMemory
 from src.utils.agent import Agent
 from src.networks.nature_cnn import NatureCNN
-from src.networks.ann import ANN
 from src.networks.dueling_cnn import DuelingCNN
 import json
 import time
@@ -62,27 +61,23 @@ def get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function):
 
 def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate, max_frames, memory_size_min, batch_size,
                   gamma, target_net_update, epsilon_min, epsilon_decay, logging_rate, save_to_file, model_path,
-                  params_path, optimizer, loss_function, target_q_equation, network):
+                  params_path, optimizer, loss_function, target_q_equation, network, preprocessing):
     # Logging
     frames = []  # Frames where episodes ended
     rewards = []  # Corresponding rewards for the episode
     speeds = []  # Corresponding speed for the episode
 
     #  Env setup
-    env_manager = GymEnvManager(4, env_name, False, True, 33, 15)
+    env_manager = GymEnvManager(4, env_name, False, True, 33, 15, preprocessing)
     num_actions = env_manager.get_num_actions()
 
-    if network == "ann":
-        policy_net = ANN(num_actions).to(device)
-        target_net = ANN(num_actions).to(device)
-        print("[INIT] ANN initialized.")
-    elif network == "dueling":
-        policy_net = DuelingCNN(num_actions).to(device)
-        target_net = DuelingCNN(num_actions).to(device)
+    if network == "dueling":
+        policy_net = DuelingCNN(preprocessing, num_actions).to(device)
+        target_net = DuelingCNN(preprocessing, num_actions).to(device)
         print("[INIT] DuelingCNN initialized.")
     else:
-        policy_net = NatureCNN(num_actions).to(device)
-        target_net = NatureCNN(num_actions).to(device)
+        policy_net = NatureCNN(preprocessing, num_actions).to(device)
+        target_net = NatureCNN(preprocessing, num_actions).to(device)
         print("[INIT] NatureCNN initialized.")
 
     replay_memory = ReplayMemory(memory_size)
@@ -155,4 +150,4 @@ def train_from_settings(settings_path):
     training_loop(s["env_name"], device, s["memory_size"], s["epsilon_initial"], s["learning_rate"], s["max_frames"],
                   s["memory_size_min"], s["batch_size"], s["gamma"], s["target_net_update"], s["epsilon_min"],
                   s["epsilon_decay"], s["logging_rate"], s["save_to_file"], s["model_path"], s["params_path"],
-                  s["optimizer"], s["loss_function"], s["target_q_equation"], s["network"])
+                  s["optimizer"], s["loss_function"], s["target_q_equation"], s["network"], s["preprocessing"])

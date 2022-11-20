@@ -13,8 +13,10 @@ class GymEnvManager:
             do_normalize: Should frame be normalized during preprocessing? Should always be True, except when debugging
             crop_from_top: Pixels to crop from top of frame during preprocessing
             crop_from_bottom: Pixels to crop from bottom of frame during preprocessing
+            preprocessing_wh_out: Output width and height after preprocessing
     """
-    def __init__(self, skip_frames, gym_environment_name, render, do_normalize, crop_from_top, crop_from_bottom):
+    def __init__(self, skip_frames, gym_environment_name, render, do_normalize, crop_from_top, crop_from_bottom,
+                 preprocessing_wh_out):
         if render:
             self.env = gym.make(gym_environment_name, render_mode="human")
         else:
@@ -23,9 +25,10 @@ class GymEnvManager:
         self.obs_buffer = collections.deque(maxlen=2)  # Used to prevent flickering, see method steps for more docs
         self.skip_frames = skip_frames
 
+        self.do_normalize = do_normalize
         self.crop_from_top = crop_from_top
         self.crop_from_bottom = crop_from_bottom
-        self.do_normalize = do_normalize
+        self.preprocessing_wh_out = preprocessing_wh_out
 
     def reset(self):
         """ Resets the environment.
@@ -99,7 +102,8 @@ class GymEnvManager:
         """
         frame = frame[:, :, 0] * 0.299 + frame[:, :, 1] * 0.587 + frame[:, :, 2] * 0.114  # Grayscale
         frame = frame[self.crop_from_top:(frame.shape[0] - self.crop_from_bottom), :]  # Crop
-        frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)  # Resize to 84x84
+        # Resize
+        frame = cv2.resize(frame, (self.preprocessing_wh_out, self.preprocessing_wh_out), interpolation=cv2.INTER_AREA)
 
         if self.do_normalize:
             frame = np.array(frame).astype(np.float32) / 255.0

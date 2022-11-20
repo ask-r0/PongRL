@@ -5,7 +5,7 @@ class DuelingCNN(nn.Module):
     """
     Only for input: 4x84x84, which is typical for atari games
     """
-    def __init__(self, n_actions):
+    def __init__(self, in_wh, n_actions):
         super(DuelingCNN, self).__init__()
         #  Convolutional layer, same for both calculating A and V
         self.conv = nn.Sequential(
@@ -17,16 +17,18 @@ class DuelingCNN(nn.Module):
             nn.ReLU()
         )
 
+        fc_input_size = (((((in_wh - 8) // 4 + 1) - 4) // 2 + 1) - 3) + 1
+
         #  Used only for calculating V
         self.fc_value = nn.Sequential(
-            nn.Linear(3136, 512),  # 64 * 7 * 7 = 3136
+            nn.Linear(64 * fc_input_size * fc_input_size, 512),  # 64 * 7 * 7 = 3136
             nn.ReLU(),
             nn.Linear(512, 1)  # Value for state, there is only 1 state for one forward-pass
         )
 
         #  Used only for calculating A
         self.fc_advantage = nn.Sequential(
-            nn.Linear(3136, 512),  # 64 * 7 * 7 = 3136
+            nn.Linear(64 * fc_input_size * fc_input_size, 512),  # 64 * 7 * 7 = 3136
             nn.ReLU(),
             nn.Linear(512, n_actions)  # Advantage for each action, n_actions total.
         )

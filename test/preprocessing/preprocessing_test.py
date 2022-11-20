@@ -7,4 +7,3 @@ def preprocessing_test(filename):
     processed = env.process_observation(cv2.imread(filename))
     start_filename = filename.split(".")[0]
     cv2.imwrite(start_filename+"_processed.png", processed)
-

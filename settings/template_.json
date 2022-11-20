@@ -16,5 +16,6 @@
   "target_net_update": 0,
   "optimizer": "",
   "loss_function": "",
-  "network": "ann"
+  "network": "",
+  "preprocessing": 0
 }
