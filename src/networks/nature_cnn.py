@@ -3,7 +3,13 @@ import torch.nn as nn
 
 class NatureCNN(nn.Module):
     """
-    Only for input: 4x84x84, which is typical for atari games
+    DQN according to Google DeepMind
+
+    Attributes:
+        in_wh: Height and width of input images
+        n_actions: Number of output
+
+    Note that in/out comments is for a 84x84 input image
     """
     def __init__(self, in_wh, n_actions):
         super(NatureCNN, self).__init__()

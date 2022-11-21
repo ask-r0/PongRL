@@ -3,7 +3,13 @@ import torch.nn as nn
 
 class DuelingCNN(nn.Module):
     """
-    Only for input: 4x84x84, which is typical for atari games
+    Dueling DQN
+
+    Attributes:
+        in_wh: Height and width of input images
+        n_actions: Number of output
+
+    Note that in/out comments is for a 84x84 input image
     """
     def __init__(self, in_wh, n_actions):
         super(DuelingCNN, self).__init__()
@@ -39,5 +45,8 @@ class DuelingCNN(nn.Module):
         # V and A go separate ways in the network
         value = self.fc_value(conv_out)  # Output is V(s)
         advantage = self.fc_advantage(conv_out)  # Output is A(s,a)
-        q = value + advantage - advantage.mean()  # Q(s,a) = V(s) + A(s,a) - mean(A(s,a))
+
+        # Q(s,a) = V(s) + A(s,a) - mean(A(s,a)).
+        # mean-term is an improvement, for simplicity not discussed here or in report. See Dueling DQN article.
+        q = value + advantage - advantage.mean()
         return q

@@ -6,7 +6,8 @@ import src.networks.dueling_cnn as dueling_cnn
 import torch
 
 
-def load_nn_and_play_pong(nn_path, nn_type, num_frames, device):
+def load_nn_and_play_pong(nn_path, nn_type, num_frames):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     #  Loading nn
     if nn_type == "dueling":
         nn = dueling_cnn.DuelingCNN(84, 6).to(device)

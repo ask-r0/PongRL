@@ -97,7 +97,7 @@ class GymEnvManager:
         Done by the following steps:
         1. Grayscale (this removes the rgb channels) (210x160x3 -> 210x160)
         2. Crop image according to crop_from_top and crop_from_bottom attributes
-        3. Resize image to 84x84
+        3. Resize image to chosen size
         4. Normalize image (if enabled)
         """
         frame = frame[:, :, 0] * 0.299 + frame[:, :, 1] * 0.587 + frame[:, :, 2] * 0.114  # Grayscale

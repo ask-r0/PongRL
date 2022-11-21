@@ -25,8 +25,8 @@ class ReplayMemory:
         rewards and dones). Experience number x from batch corresponds to index x in the different arrays.
 
         """
-        indices = np.random.choice(np.arange(len(self.memory)), batch_size, replace=False)
-        states, actions, next_states, rewards, dones = zip(*[self.memory[idx] for idx in indices])
+        idx = np.random.choice(np.arange(len(self.memory)), batch_size, replace=False)
+        states, actions, next_states, rewards, dones = zip(*[self.memory[i] for i in idx])
         return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states)
 
     def is_sample_available(self, batch_size):

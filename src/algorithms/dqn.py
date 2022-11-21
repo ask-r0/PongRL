@@ -16,14 +16,16 @@ def get_new_epsilon(epsilon, epsilon_min, epsilon_decay):
 
 
 def get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function):
+    """ Calculates loss with method used in Double DQN"""
     states, actions, rewards, dones, next_states = batch  # Gets attributes from batch
+    # Transforming attributes to tensors
     states_t = torch.tensor(states).to(device)
     next_states_t = torch.tensor(next_states).to(device)
     actions_t = torch.tensor(actions).to(device)
     rewards_t = torch.tensor(rewards).to(device)
     done_t = torch.ByteTensor(dones).to(device)
 
-    state_action_values = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
+    q = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
     next_state_actions = policy_net(next_states_t).max(1)[1]  # The action to be taken from next state
 
     #  Q(next_state, best action from next state according to policy net)
@@ -31,37 +33,40 @@ def get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function):
 
     next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the las
     next_state_values = next_state_values.detach()
-    expected_state_action_values = next_state_values * gamma + rewards_t
+    target_q = next_state_values * gamma + rewards_t
 
     if loss_function == "huber":
-        return nn.SmoothL1Loss()(state_action_values, expected_state_action_values)
+        return nn.SmoothL1Loss()(q, target_q)
     else:
-        return nn.MSELoss()(state_action_values, expected_state_action_values)
+        return nn.MSELoss()(q, target_q)
 
 
 def get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function):
-    states, actions, rewards, dones, next_states = batch
+    """ Calculates loss with method used in DQN"""
+    states, actions, rewards, dones, next_states = batch  # Gets attributes from batch
+    #  Transforming attributrs to tensors
     states_t = torch.tensor(states).to(device)
     next_states_t = torch.tensor(next_states).to(device)
     actions_t = torch.tensor(actions).to(device)
     rewards_t = torch.tensor(rewards).to(device)
     done_t = torch.ByteTensor(dones).to(device)
 
-    state_action_values = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
+    q = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
     next_state_values = target_net(next_states_t).max(1)[0]  # max Q-value for next state
     next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last
     next_state_values = next_state_values.detach()
-    expected_state_action_values = next_state_values * gamma + rewards_t
+    target_q = next_state_values * gamma + rewards_t
 
     if loss_function == "huber":
-        return nn.SmoothL1Loss()(state_action_values, expected_state_action_values)
+        return nn.SmoothL1Loss()(q, target_q)
     else:
-        return nn.MSELoss()(state_action_values, expected_state_action_values)
+        return nn.MSELoss()(q, target_q)
 
 
 def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate, max_frames, memory_size_min, batch_size,
                   gamma, target_net_update, epsilon_min, epsilon_decay, logging_rate, save_to_file, model_path,
                   params_path, optimizer, loss_function, target_q_equation, network, preprocessing):
+    """ Trains a neural network to play a game from the Gym library. See settings folder for parameters info. """
     # Logging
     frames = []  # Frames where episodes ended
     rewards = []  # Corresponding rewards for the episode
@@ -106,11 +111,13 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
         if len(replay_memory) >= memory_size_min:  # Perform training
             batch = replay_memory.get_sample(batch_size)
 
+            # Calculate loss
             if target_q_equation == "ddqn":
                 loss = get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function)
             else:
                 loss = get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function)
 
+            # Update weights
             loss.backward()
             opt.step()
             opt.zero_grad()
@@ -118,7 +125,7 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
             if i % target_net_update == 0:  # Sync target_net with policy_net
                 target_net.load_state_dict(policy_net.state_dict())
 
-            epsilon = get_new_epsilon(epsilon, epsilon_min, epsilon_decay)
+            epsilon = get_new_epsilon(epsilon, epsilon_min, epsilon_decay)  #  Update epsilon
 
         if i % logging_rate == 0:
             if save_to_file:
@@ -138,12 +145,14 @@ def training_loop(env_name, device, memory_size, epsilon_initial, learning_rate,
 
             frames_idx = len(frames) - 1
             if frames_idx >= 0:
-                print(f"{i} ✅ ε={epsilon}, last episode ended @ frame={frames[frames_idx]}:"
+                print(f"{i} | ε={epsilon:.5f}, last episode ended @ frame={frames[frames_idx]}:"
                       f" fps={speeds[frames_idx]:.2f}, reward={rewards[frames_idx]}")
 
 
 def train_from_settings(settings_path):
+    """ Trains neural network from a settings file. See settings folder for more info."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"[INIT] DEVICE={device}")
     with open(settings_path, "r") as f:
         s = json.load(f)
 
