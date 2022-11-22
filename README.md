@@ -3,12 +3,17 @@ Prosjekt utført i faget IDATT2502 utført høsten 2022.
 
 Github-mappen  består av en implementasjon av Deep Q Learning algoritme ved bruk av Deep-Q-Networks.
 
-## Dependencies
-Følgende biblioteker må installeres for å kjøre programmet:
-* Gym (https://www.gymlibrary.dev/). Kommando: `pip3 install "gym[atari,accept-rom-license]==0.21.0"`
-* PyTorch (https://pytorch.org/). Kommando: `pip3 install torch`
+## Kjøre programmet
+Kjør programmet ved følgende kommandoer:
 
-_Kommandoer kun testes på macOS og Google Colab._
+```
+python3 -m venv env
+source env/bin/activate
+pip3 install -r req.txt
+python3 src/main.py
+```
+
+_Kommandoer kun testet på macOS._
 
 ## Funksjonalitet
 ### Se trent nettverk spille
@@ -29,4 +34,7 @@ Se settings-mappen for all informasjon om hvordan settings skal formateres.
 Følgende video viser utviklingen til en agent under trening:
 
 https://youtu.be/XtnDACZDNX4
+
+_Videoen viser bare trening fram til 250k frames, test programmet selv med det ferdige trente nettet example.pth 
+som er av typen "cnn" for å se en agent trent på 800k frames spillel_
 
