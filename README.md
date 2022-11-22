@@ -21,14 +21,14 @@ _Kommandoer kun testet på macOS med Python-versjon `3.10.7`. Det er og mulig å
 ### Se trent nettverk spille
 Nettverk som lastes må være trent på GPU. Foreløpig er kun miljøet Pong støttet.
 
-`python3 main.py play <network-path> <network-type> <num-frames>`
+Kommando: `python3 main.py play <network-path> <network-type> <num-frames>`
 
 * `<network-path>` er stien til nettverket
 * `<network-type>` er typen nettverk. Enten "cnn" eller "dueling".
 * `<num-frames>` er antall steg før programmet avslutter
 
 ### Trene nettverk fra settings (instillinger)
-`python3 main.py train <settings-path>`
+Kommando: `python3 main.py train <settings-path>`
 
 Se settings-mappen for all informasjon om hvordan settings skal formateres.
 
