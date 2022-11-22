@@ -29,11 +29,11 @@ def get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function):
     next_state_actions = policy_net(next_states_t).max(1)[1]  # The action to be taken from next state
 
     #  Q(next_state, best action from next state according to policy net)
-    next_state_values = target_net(next_states_t).gather(1, next_state_actions.unsqueeze(-1)).squeeze(-1)
+    next_state_q = target_net(next_states_t).gather(1, next_state_actions.unsqueeze(-1)).squeeze(-1)
 
-    next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the las
-    next_state_values = next_state_values.detach()
-    target_q = next_state_values * gamma + rewards_t
+    next_state_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the las
+    next_state_q = next_state_q.detach()
+    target_q = next_state_q * gamma + rewards_t
 
     if loss_function == "huber":
         return nn.SmoothL1Loss()(q, target_q)
@@ -52,10 +52,10 @@ def get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function):
     done_t = torch.ByteTensor(dones).to(device)
 
     q = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
-    next_state_values = target_net(next_states_t).max(1)[0]  # max Q-value for next state
-    next_state_values[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last
-    next_state_values = next_state_values.detach()
-    target_q = next_state_values * gamma + rewards_t
+    next_states_max_q = target_net(next_states_t).max(1)[0]  # max Q-value for next state
+    next_states_max_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last
+    next_states_max_q = next_states_max_q.detach()
+    target_q = next_states_max_q * gamma + rewards_t
 
     if loss_function == "huber":
         return nn.SmoothL1Loss()(q, target_q)

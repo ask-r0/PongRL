@@ -28,3 +28,5 @@ Se settings-mappen for all informasjon om hvordan settings skal formateres.
 ## Demovideo
 Følgende video viser utviklingen til en agent under trening:
 
+https://youtu.be/XtnDACZDNX4
+
