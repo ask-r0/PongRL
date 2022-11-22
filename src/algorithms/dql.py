@@ -31,7 +31,7 @@ def get_loss_ddqn(batch, policy_net, target_net, gamma, device, loss_function):
     #  Q(next_state, best action from next state according to policy net)
     next_state_q = target_net(next_states_t).gather(1, next_state_actions.unsqueeze(-1)).squeeze(-1)
 
-    next_state_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the las
+    next_state_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last step
     next_state_q = next_state_q.detach()
     target_q = next_state_q * gamma + rewards_t
 
@@ -53,7 +53,7 @@ def get_loss_dqn(batch, policy_net, target_net, gamma, device, loss_function):
 
     q = policy_net(states_t).gather(1, actions_t.unsqueeze(-1)).squeeze(-1)  # Q(s,a)
     next_states_max_q = target_net(next_states_t).max(1)[0]  # max Q-value for next state
-    next_states_max_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last
+    next_states_max_q[done_t] = 0.0  # Only count the rewards for experiences where next_state was the last step
     next_states_max_q = next_states_max_q.detach()
     target_q = next_states_max_q * gamma + rewards_t
 
