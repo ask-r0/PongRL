@@ -3,6 +3,8 @@ Prosjekt utført i faget IDATT2502 utført høsten 2022.
 
 Github-mappen  består av en implementasjon av Deep Q Learning algoritme ved bruk av Deep-Q-Networks.
 
+Dersom dette ikke leses fra github, kan github prosjektet finnes på lenken: https://github.com/ask-r0/PongRL
+
 ## Kjøre programmet
 Kjør programmet ved følgende kommandoer:
 
