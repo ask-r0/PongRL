@@ -1,7 +1,7 @@
 import numpy as np
 
 import torch
-from src.utils.replay_memory import Experience
+from utils.replay_memory import Experience
 import random
 
 

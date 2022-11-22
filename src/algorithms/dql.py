@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from src.utils.gym_env_manager import GymEnvManager
-from src.utils.replay_memory import ReplayMemory
-from src.utils.agent import Agent
-from src.networks.nature_cnn import NatureCNN
-from src.networks.dueling_cnn import DuelingCNN
+from utils.gym_env_manager import GymEnvManager
+from utils.replay_memory import ReplayMemory
+from utils.agent import Agent
+from networks.nature_cnn import NatureCNN
+from networks.dueling_cnn import DuelingCNN
 import json
 import time
 

@@ -1,4 +1,4 @@
-from src.algorithms.dql import train_from_settings
+from algorithms.dql import train_from_settings
 from utils.play import load_nn_and_play_pong
 import sys
 

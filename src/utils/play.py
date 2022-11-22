@@ -1,8 +1,8 @@
-from src.utils.gym_env_manager import GymEnvManager
-from src.utils.replay_memory import ReplayMemory
-from src.utils.agent import Agent
-import src.networks.nature_cnn as nature_cnn
-import src.networks.dueling_cnn as dueling_cnn
+from utils.gym_env_manager import GymEnvManager
+from utils.replay_memory import ReplayMemory
+from utils.agent import Agent
+import networks.nature_cnn as nature_cnn
+import networks.dueling_cnn as dueling_cnn
 import torch
 
 
