@@ -23,12 +23,16 @@ Nettverk som lastes må være trent på GPU. Foreløpig er kun miljøet Pong st�
 
 Kommando: `python3 main.py play <network-path> <network-type> <num-frames>`
 
+Eksempel: `python3 src/main.py train settings/pong.json`
+
 * `<network-path>` er stien til nettverket
 * `<network-type>` er typen nettverk. Enten "cnn" eller "dueling".
 * `<num-frames>` er antall steg før programmet avslutter
 
 ### Trene nettverk fra settings (instillinger)
 Kommando: `python3 main.py train <settings-path>`
+
+Eksempel: `python3 src/main.py play pre_trained/example.pth cnn 1000`
 
 Se settings-mappen for all informasjon om hvordan settings skal formateres.
 
