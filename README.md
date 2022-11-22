@@ -13,7 +13,7 @@ pip3 install -r requirements.txt
 python3 src/main.py
 ```
 
-_Kommandoer kun testet på macOS._
+_Kommandoer kun testet på macOS. Det er og mulig å installere dependencies: gym, torch og cv2 manuelt. Dette er ikke testet._
 
 ## Funksjonalitet
 ### Se trent nettverk spille
@@ -36,5 +36,5 @@ Følgende video viser utviklingen til en agent under trening:
 https://youtu.be/XtnDACZDNX4
 
 _Videoen viser bare trening fram til 250k frames, test programmet selv med det ferdige trente nettet example.pth 
-ved kommandoen: _ `python3 src/main.py play pre_trained/example.pth cnn 1000`
+ved kommandoen:_ `python3 src/main.py play pre_trained/example.pth cnn 1000`
 
