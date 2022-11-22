@@ -36,5 +36,5 @@ Følgende video viser utviklingen til en agent under trening:
 https://youtu.be/XtnDACZDNX4
 
 _Videoen viser bare trening fram til 250k frames, test programmet selv med det ferdige trente nettet example.pth 
-som er av typen "cnn" for å se en agent trent på 800k frames spillel_
+ved kommandoen: _ `python3 src/main.py play pre_trained/example.pth cnn 1000`
 
