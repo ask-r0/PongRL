@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 python3 src/main.py
 ```
 
-_Kommandoer kun testet på macOS med Python-versjon `3.10.7`. Det er og mulig å installere dependencies: gym, torch og cv2 manuelt. Dette er ikke testet._
+_Kommandoer kun testet på macOS med Python-versjon `3.10.7`. Det er og mulig å installere dependencies: gym, torch og cv2 manuelt framfor steg 3. Dette er ikke testet._
 
 ## Funksjonalitet
 ### Se trent nettverk spille
